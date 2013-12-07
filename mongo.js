@@ -189,12 +189,14 @@ LiveDbMongo.prototype.getOps = function(cName, docName, start, end, callback) {
 
 // ***** Query methods
 
-LiveDbMongo.prototype.query = function(livedb, cName, inputQuery, callback) {
+LiveDbMongo.prototype.query = function(livedb, cName, inputQuery, options, callback) {
   if (this.closed) return callback('db already closed');
   if (/_ops$/.test(cName)) return callback('Invalid collection name');
+  if(!options) options = {};
 
   var query = normalizeQuery(inputQuery);
   var cursorMethods = extractCursorMethods(query);
+  var queryOptions = extractQueryOptions(options)
 
   // For count queries, don't run the find() at all.
   if (query.$count) {
@@ -206,7 +208,7 @@ LiveDbMongo.prototype.query = function(livedb, cName, inputQuery, callback) {
       callback(err, {results:[], extra:count});
     });
   } else {
-    this.mongo.collection(cName).find(query, function(err, cursor) {
+    this.mongo.collection(cName).find(query, queryOptions, function(err, cursor) {
       if (err) return callback(err);
 
       for (var i = 0; i < cursorMethods.length; i++) {
@@ -275,6 +277,20 @@ function extractCursorMethods(query) {
     }
   }
   return out;
+}
+
+// pull fields out of the options and create a mongo style query options object:
+// { fields: ["name", "email" ] } =====> { name: 1, email: 1 }
+function extractQueryOptions(options) {
+  var queryOptions = {};
+  console.log("ldbm OPTIONS", options)
+  if(options.fields && options.fields.length) {
+    options.fields.forEach(function(field) {
+      queryOptions[field] = 1;
+    });
+  }
+  console.log("QUERY OPTIONS", queryOptions)
+  return queryOptions;
 }
 
 function normalizeQuery(inputQuery) {

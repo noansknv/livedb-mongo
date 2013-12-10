@@ -189,14 +189,20 @@ LiveDbMongo.prototype.getOps = function(cName, docName, start, end, callback) {
 
 // ***** Query methods
 
-LiveDbMongo.prototype.query = function(livedb, cName, inputQuery, options, callback) {
+LiveDbMongo.prototype.query = function(livedb, cName, inputQuery, opts, callback) {
   if (this.closed) return callback('db already closed');
   if (/_ops$/.test(cName)) return callback('Invalid collection name');
-  if(!options) options = {};
+
+  if (typeof opts === 'function') {
+    callback = opts;
+    opts = {};
+  } else if (!opts) {
+    opts = {};
+  }
 
   var query = normalizeQuery(inputQuery);
   var cursorMethods = extractCursorMethods(query);
-  var queryOptions = extractQueryOptions(options)
+  var queryOptions = extractQueryOptions(opts)
 
   // For count queries, don't run the find() at all.
   if (query.$count) {
@@ -283,13 +289,14 @@ function extractCursorMethods(query) {
 // { fields: ["name", "email" ] } =====> { name: 1, email: 1 }
 function extractQueryOptions(options) {
   var queryOptions = {};
-  console.log("ldbm OPTIONS", options)
   if(options.fields && options.fields.length) {
     options.fields.forEach(function(field) {
       queryOptions[field] = 1;
     });
+    queryOptions._v = 1;
+    queryOptions._type = 1;
+    queryOptions._m = 1;
   }
-  console.log("QUERY OPTIONS", queryOptions)
   return queryOptions;
 }
 

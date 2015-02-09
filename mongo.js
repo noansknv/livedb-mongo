@@ -1,5 +1,3 @@
-var mongoskin = require('mongoskin');
-var mongonative = require('mongodb');
 var assert = require('assert');
 var async = require('async');
 var util = require('util');
@@ -38,9 +36,6 @@ var cursorOperators = {
  * var db = require('livedb-mongo')(skin);
  */
 exports = module.exports = function(mongo, options) {
-  if (util.isArray(mongo) || typeof mongo !== 'object') {
-    mongo = mongoskin.db.apply(mongoskin.db, arguments);
-  }
   return new LiveDbMongo(mongo, options);
 };
 
@@ -386,13 +381,13 @@ LiveDbMongo.prototype.queryNeedsPollMode = function(index, query) {
 LiveDbMongo.prototype.checkQuery = function(query) {
   if (!this.allowJSQueries) {
     if (query.$query.$where != null)
-      return "$where queries disabled";
+      return '$where queries disabled';
     if (query.$mapReduce != null)
-      return "$mapReduce queries disabled";
+      return '$mapReduce queries disabled';
   }
 
   if (!this.allowAggregateQueries && query.$aggregate)
-    return "$aggregate queries disabled";
+    return '$aggregate queries disabled';
 };
 
 function extractCursorMethods(query) {

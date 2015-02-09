@@ -1,28 +1,33 @@
 # Mocha test using livedb's snapshot tests
-mongoskin = require 'mongoskin'
+mongodb = require 'mongodb'
 liveDbMongo = require './mongo'
 assert = require 'assert'
 
 # Clear mongo
 clear = (callback) ->
-  mongo = mongoskin.db 'mongodb://localhost:27017/test?auto_reconnect', safe:true
-  mongo.dropCollection 'testcollection', ->
+  mongodb.MongoClient.connect('mongodb://localhost:27017/test?auto_reconnect', {safe:true}, (err, mongo) ->
+    mongo.dropCollection 'testcollection', ->
     mongo.dropCollection 'testcollection_ops', ->
       mongo.close()
 
       callback()
+  )
 
 create = (callback) ->
   clear ->
-    callback liveDbMongo 'mongodb://localhost:27017/test?auto_reconnect', safe: false
-
+    mongodb.MongoClient.connect('mongodb://localhost:27017/test?auto_reconnect', {safe:true}, (err, mongo) ->
+      callback liveDbMongo mongo
+    )
+    
 describe 'mongo', ->
   afterEach clear
 
   describe 'raw', ->
     beforeEach (done) ->
-      @mongo = mongoskin.db 'mongodb://localhost:27017/test?auto_reconnect', safe:true
-      create (@db) => done()
+      mongodb.MongoClient.connect('mongodb://localhost:27017/test?auto_reconnect', safe:true, (err, mongo) =>
+        @mongo = mongo
+        create (@db) => done()  
+      )
 
     afterEach ->
       @mongo.close()
@@ -228,7 +233,7 @@ describe 'mongo', ->
           assert.deepEqual result, @snapshot
           done()
 
-
-  require('livedb/test/snapshotdb') create
-  require('livedb/test/oplog') create
+  describe 'livedb imported tests', ->
+    require('livedb/test/snapshotdb') create
+    require('livedb/test/oplog') create
 

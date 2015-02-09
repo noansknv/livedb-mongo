@@ -5,8 +5,7 @@
   "main": "mongo.js",
   "dependencies": {
     "async": "^0.9",
-    "mongodb": "*",
-    "mongoskin": "*"
+    "mongodb": "^2.0.15"
   },
   "devDependencies": {
     "mocha": "^1",
